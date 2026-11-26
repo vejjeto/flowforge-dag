@@ -4,6 +4,10 @@
 
 **FlowForge DAG** es un estudio visual **standalone** para construir y ejecutar flujos de automatización sobre **Grafos Dirigidos Acíclicos (DAG)** con React Flow (`@xyflow/react`), ejecución paralela por niveles topológicos de Kahn, *checkpointing* y re-ejecución desde nodo fallido, nodos HTTP protegidos contra SSRF y un servidor **Model Context Protocol (MCP)** integrado (`POST /api/mcp` + stdio).
 
+## Qué hace este proyecto
+
+**FlowForge DAG** es un editor visual de flujos de automatización (estilo n8n) donde conectas nodos de *Trigger*, *Condición*, *Transformación*, *HTTP* o *IA* para ejecutar procesos paso a paso y en paralelo. Guarda el estado de cada nodo ejecutado para poder reanudar un flujo desde el punto exacto donde falló sin repetir todo desde cero, y expone herramientas MCP para que agentes de IA puedan validar y ejecutar flujos.
+
 - **Estudio en vivo**: `/`
 - **Demo interactiva en 1 clic**: `/demo`
 - **Flujos e historial de ejecuciones**: `/workflows`
