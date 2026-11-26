@@ -1,33 +1,39 @@
-# FlowForge DAG — Visual Workflow Engine & MCP Server
+# FlowForge DAG — Editor Visual de Flujos y Servidor MCP
 
-[![CI](https://github.com/diego/flowforge-dag/actions/workflows/ci.yml/badge.svg)](https://github.com/diego/flowforge-dag/actions/workflows/ci.yml)
+[![CI](https://github.com/vejjeto/flowforge-dag/actions/workflows/ci.yml/badge.svg)](https://github.com/vejjeto/flowforge-dag/actions/workflows/ci.yml)
 
-**FlowForge DAG** is a standalone visual DAG automation studio powered by React Flow (`@xyflow/react`), parallel Kahn topological level execution, per-node checkpoint replay, SSRF-hardened HTTP nodes, and an integrated **Model Context Protocol (MCP)** server (`POST /api/mcp` + stdio).
+**FlowForge DAG** es un estudio visual **standalone** para construir y ejecutar flujos de automatización sobre **Grafos Dirigidos Acíclicos (DAG)** con React Flow (`@xyflow/react`), ejecución paralela por niveles topológicos de Kahn, *checkpointing* y re-ejecución desde nodo fallido, nodos HTTP protegidos contra SSRF y un servidor **Model Context Protocol (MCP)** integrado (`POST /api/mcp` + stdio).
 
-- **Live Studio**: `/`
-- **1-Click Interactive Demo**: `/demo`
-- **Workflows & Run History**: `/workflows`
-- **OpenAPI 3.1 Docs**: `/api/docs`
+- **Estudio en vivo**: `/`
+- **Demo interactiva en 1 clic**: `/demo`
+- **Flujos e historial de ejecuciones**: `/workflows`
+- **Documentación OpenAPI 3.1**: `/api/docs`
 
-## Architecture
+---
+
+## Arquitectura
 
 ```mermaid
 flowchart LR
-  UI["React Flow Studio + MCP Inspector (/ , /demo)"] -->|SSE / REST| API["Next.js App Router API (/api/workflows, /api/runs)"]
-  Agent["External AI Agent / IDE"] -->|JSON-RPC 2.0| MCP["MCP Server (/api/mcp & stdio)"]
-  API --> Engine["Parallel Kahn Level Executor + Checkpoint Replay"]
+  UI["Estudio React Flow + Inspector MCP (/ , /demo)"] -->|SSE / REST| API["Next.js App Router API (/api/workflows, /api/runs)"]
+  Agent["Agente IA / IDE externo"] -->|JSON-RPC 2.0| MCP["Servidor MCP (/api/mcp y stdio)"]
+  API --> Engine["Ejecutor Paralelo por Niveles Kahn + Checkpoint Replay"]
   MCP --> Engine
-  Engine --> Nodes["Nodes: Trigger, Condition (AST), Transform, HTTP (Anti-SSRF), AI Summary, Log"]
+  Engine --> Nodes["Nodos: Trigger, Condition (AST), Transform, HTTP (Anti-SSRF), AI Summary, Log"]
   Engine --> DB["Drizzle ORM + SQLite (node:sqlite) / Postgres 17"]
 ```
 
-## Architecture Decision Records (ADRs)
+---
 
-1. **Parallel Topological Levels via Kahn + `Promise.allSettled`**: Grouping zero-in-degree nodes per wave (`computeTopologicalLevels`) enables safe concurrent execution of independent branches while preserving deterministic ordering, conditional `true`/`false` branch skipping, and Tarjan SCC cycle isolation.
-2. **Checkpoint Persistence & Partial Replay**: Every node persists `inputJson` and `outputJson` in `node_execution_logs`. `POST /api/runs/[runId]/replay-from/[nodeId]` reuses upstream `outputJson` checkpoints and only re-executes the target node and its downstream subgraph.
-3. **Dual-Transport MCP Server (`POST /api/mcp` + stdio)**: Exposes `list_workflows`, `validate_dag`, `run_workflow`, and `get_run_logs` through a single Zod-validated JSON-RPC 2.0 dispatcher shared by HTTP and CLI stdio.
+## Decisiones Técnicas Clave (ADRs)
 
-## Quick Setup (3 Steps)
+1. **Niveles topológicos paralelos con Kahn + `Promise.allSettled`**: Agrupar nodos con grado de entrada cero por oleadas (`computeTopologicalLevels`) permite ejecutar ramas independientes en paralelo preservando determinismo, salto condicional `true`/`false` y aislamiento de ciclos con Tarjan SCC.
+2. **Persistencia de checkpoints y replay parcial**: Cada nodo guarda `inputJson` y `outputJson` en `node_execution_logs`. `POST /api/runs/[runId]/replay-from/[nodeId]` reutiliza los checkpoints exitosos previos y solo re-ejecuta desde el nodo objetivo hacia adelante.
+3. **Servidor MCP dual (`POST /api/mcp` + stdio)**: Expone `list_workflows`, `validate_dag`, `run_workflow` y `get_run_logs` mediante un único despachador JSON-RPC 2.0 validado con Zod, compartido entre HTTP y CLI stdio.
+
+---
+
+## Ejecución Local en 3 Pasos
 
 ```bash
 pnpm install
@@ -35,10 +41,12 @@ pnpm db:migrate && pnpm db:seed
 pnpm dev
 ```
 
-Open `http://localhost:3006` (or `http://localhost:3006/demo` for 1-click execution).
+Abre `http://localhost:3006` (o `http://localhost:3006/demo` para ejecutar un flujo en 1 clic).
 
-## Honest 100 → 100k Scale Trade-offs
+---
 
-1. **In-Process Execution vs. Distributed Queue**: Currently DAG levels execute inside the Next.js route process with `Promise.allSettled`. At 100k concurrent runs, move level dispatch to a durable worker queue (BullMQ/Temporal) while keeping `computeTopologicalLevels` and checkpoint contracts unchanged.
-2. **Embedded SQLite vs. Connection-Pooled Postgres**: Local dev and CI default to `node:sqlite` for zero-config startup; high-concurrency multi-instance deployments should point `DATABASE_URL` to Postgres 17 (`docker-compose.yml` included).
-3. **In-Memory SSE vs. Pub/Sub Broker**: Live node status streams directly over HTTP SSE from the executing request; multi-replica horizontal scaling would require Redis Pub/Sub to fan out `node:start` / `node:complete` events across instances.
+## Trade-offs Honestos (100 → 100k Ejecuciones)
+
+1. **SQLite local vs. PostgreSQL 17**: SQLite `node:sqlite` en modo WAL brinda latencia cero en desarrollo y pruebas; flujos concurrentes distribuidos deben apuntar Drizzle a PostgreSQL (`docker-compose.yml` + `src/db/schema.pg.ts`).
+2. **Ejecución en proceso vs. workers distribuidos**: Correr oleadas `Promise.allSettled` dentro del Route Handler simplifica SSE en tiempo real; nodos HTTP lentos a escala de 100k ejecuciones requieren colas dedicadas (BullMQ/Temporal) con reintentos por nodo.
+3. **Fallback heurístico local de `AiSummaryNode`**: Garantiza demos offline deterministas cuando faltan `OPENAI_API_KEY`/`GEMINI_API_KEY`, mientras en producción puede activarse cualquier proveedor LLM con salida estructurada Zod.
