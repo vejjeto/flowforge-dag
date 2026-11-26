@@ -1,0 +1,48 @@
+@import "@xyflow/react/dist/style.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+}
+
+/* React Flow dark/light harmonization */
+.react-flow__controls {
+  border: 1px solid rgb(228 228 231);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.25);
+}
+
+html.dark .react-flow__controls {
+  border-color: rgb(39 39 42);
+  background: rgb(24 24 27);
+}
+
+html.dark .react-flow__controls-button {
+  background: rgb(24 24 27);
+  border-bottom-color: rgb(39 39 42);
+  fill: rgb(228 228 231);
+  color: rgb(228 228 231);
+}
+
+html.dark .react-flow__controls-button:hover {
+  background: rgb(39 39 42);
+}
+
+html.dark .react-flow__minimap {
+  background: rgb(17 17 20);
+  border: 1px solid rgb(39 39 42);
+  border-radius: 0.75rem;
+}
+
+.react-flow__attribution {
+  display: none;
+}
