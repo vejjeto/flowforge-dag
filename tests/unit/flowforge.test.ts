@@ -21,6 +21,7 @@ import { executeHttpRequestNode } from "@/core/nodes/http-request";
 import { executeTransformNode } from "@/core/nodes/transform";
 import { getDb, resetDbConnection, seedDatabase } from "@/db";
 import { validateEnv } from "@/lib/env";
+import { translations } from "@/lib/i18n";
 import { isBlockedIpAddress } from "@/lib/ssrf";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -553,5 +554,18 @@ describe("FlowForge Core DAG, Parallel Levels, Replay & MCP", () => {
       result: { structuredContent: { run: { status: string } } };
     };
     expect(runJson.result.structuredContent.run.status).toBe("success");
+  });
+
+  it("maintains full i18n es/en dictionary parity with non-empty strings", () => {
+    const esKeys = Object.keys(translations.es).sort();
+    const enKeys = Object.keys(translations.en).sort();
+    expect(esKeys).toEqual(enKeys);
+    expect(esKeys.length).toBeGreaterThan(0);
+
+    for (const key of esKeys) {
+      const k = key as keyof typeof translations.es;
+      expect(translations.es[k].trim().length).toBeGreaterThan(0);
+      expect(translations.en[k].trim().length).toBeGreaterThan(0);
+    }
   });
 });

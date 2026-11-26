@@ -3,8 +3,10 @@
 import { NODE_TYPE_META } from "@/components/studio/node-meta";
 import { UiButton } from "@/components/ui/button";
 import { HealthBadge } from "@/components/ui/health-badge";
+import { LanguageToggle } from "@/components/ui/language-toggle";
 import { useUiToast } from "@/components/ui/toast-provider";
 import type { WorkflowRecord, WorkflowRunRecord } from "@/contracts/workflow";
+import { useLocale } from "@/lib/i18n";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -25,6 +27,7 @@ export function WorkflowsManager({
 }) {
   const queryClient = useQueryClient();
   const { pushToast } = useUiToast();
+  const { t } = useLocale();
   const [selectedId, setSelectedId] = React.useState<string>(
     initialWorkflows[0]?.id ?? "",
   );
@@ -147,16 +150,17 @@ export function WorkflowsManager({
               className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              Volver al Studio
+              {t.backToStudio}
             </Link>
             <div className="flex items-center gap-2">
               <Workflow className="h-5 w-5 text-indigo-500" />
-              <h1 className="text-base font-bold">
-                Workflows e Historial de Ejecuciones
-              </h1>
+              <h1 className="text-base font-bold">{t.workflowsPageTitle}</h1>
             </div>
           </div>
-          <HealthBadge />
+          <div className="flex items-center gap-2">
+            <HealthBadge />
+            <LanguageToggle />
+          </div>
         </div>
       </header>
 
@@ -164,19 +168,19 @@ export function WorkflowsManager({
         <section className="space-y-4 lg:col-span-5">
           <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Crear nuevo workflow
+              {t.createNewWorkflow}
             </h2>
             <div className="mt-3 space-y-2.5">
               <input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="Nombre del flujo..."
+                placeholder={t.workflowNamePlaceholder}
                 className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-xs outline-none focus:border-indigo-500 dark:border-zinc-800 dark:bg-zinc-900"
               />
               <input
                 value={newDesc}
                 onChange={(e) => setNewDesc(e.target.value)}
-                placeholder="Descripcion breve..."
+                placeholder={t.workflowDescPlaceholder}
                 className="w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 text-xs outline-none focus:border-indigo-500 dark:border-zinc-800 dark:bg-zinc-900"
               />
               <UiButton
@@ -185,7 +189,7 @@ export function WorkflowsManager({
                 loading={createMutation.isPending}
               >
                 <Plus className="h-3.5 w-3.5" />
-                Crear Workflow
+                {t.createWorkflowBtn}
               </UiButton>
             </div>
           </div>
@@ -218,7 +222,8 @@ export function WorkflowsManager({
                       {wf.description}
                     </p>
                     <p className="mt-2 font-mono text-[11px] text-zinc-400">
-                      {wf.nodes.length} nodos · {wf.edges.length} aristas
+                      {wf.nodes.length} {t.nodesLabel} · {wf.edges.length}{" "}
+                      {t.edgesLabel}
                     </p>
                   </button>
                   <div className="flex items-center gap-1">
@@ -226,7 +231,7 @@ export function WorkflowsManager({
                       href={`/?id=${encodeURIComponent(wf.id)}`}
                       onClick={(e) => e.stopPropagation()}
                       className="rounded-lg p-1.5 text-indigo-400 hover:bg-indigo-500/10"
-                      title="Abrir en Studio"
+                      title={t.openInStudio}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Link>
@@ -238,7 +243,7 @@ export function WorkflowsManager({
                           deleteMutation.mutate(wf.id);
                         }}
                         className="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10"
-                        title="Eliminar workflow"
+                        title={t.deleteWorkflow}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -252,11 +257,10 @@ export function WorkflowsManager({
 
         <section className="lg:col-span-7">
           <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-            <h2 className="text-sm font-semibold">Historial de Ejecuciones</h2>
+            <h2 className="text-sm font-semibold">{t.executionHistory}</h2>
             {!detailQuery.data?.runs?.length ? (
               <p className="mt-4 rounded-lg border border-dashed border-zinc-300 p-6 text-center text-xs text-zinc-500 dark:border-zinc-800">
-                Aun no hay ejecuciones registradas para este workflow. Ejecutalo
-                desde el Studio.
+                {t.noRunsYet}
               </p>
             ) : (
               <div className="mt-4 space-y-3">
@@ -298,7 +302,7 @@ export function WorkflowsManager({
                             </span>
                             <button
                               type="button"
-                              title="Re-ejecutar desde este nodo"
+                              title={t.replayFromNode}
                               onClick={() =>
                                 replayMutation.mutate({
                                   runId: run.id,
@@ -308,7 +312,7 @@ export function WorkflowsManager({
                               className="inline-flex items-center gap-0.5 rounded bg-indigo-500/20 px-1 py-0.5 text-[9px] text-indigo-300 hover:bg-indigo-500/35"
                             >
                               <RotateCcw className="h-2.5 w-2.5" />
-                              Re-ejecutar desde este nodo
+                              {t.replayFromNode}
                             </button>
                           </span>
                         ))}

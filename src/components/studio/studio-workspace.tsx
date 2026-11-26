@@ -2,12 +2,14 @@
 
 import { UiButton } from "@/components/ui/button";
 import { HealthBadge } from "@/components/ui/health-badge";
+import { LanguageToggle } from "@/components/ui/language-toggle";
 import { useUiToast } from "@/components/ui/toast-provider";
 import type {
   FlowNodeType,
   NodeExecutionLogRecord,
   WorkflowRecord,
 } from "@/contracts/workflow";
+import { useLocale } from "@/lib/i18n";
 import { toContractGraph, useWorkflowStore } from "@/store/workflow-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -56,6 +58,7 @@ function StudioCanvas({
   triggerPayloadText: string;
   onTriggerPayloadChange: (next: string) => void;
 }) {
+  const { t } = useLocale();
   const { screenToFlowPosition } = useReactFlow();
   const nodes = useWorkflowStore((s) => s.nodes);
   const edges = useWorkflowStore((s) => s.edges);
@@ -109,11 +112,9 @@ function StudioCanvas({
     <div className="flex flex-1 overflow-hidden">
       <aside className="hidden w-60 shrink-0 flex-col border-r border-zinc-200 bg-white/80 p-3 dark:border-zinc-800 dark:bg-zinc-950/80 md:flex">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
-          Paleta de Nodos
+          {t.nodePalette}
         </p>
-        <p className="mt-0.5 text-[11px] text-zinc-500">
-          Arrastra o haz clic para añadir
-        </p>
+        <p className="mt-0.5 text-[11px] text-zinc-500">{t.dragOrClickToAdd}</p>
 
         <div className="mt-2.5 space-y-1.5">
           {NODE_TYPE_LIST.map((item) => (
@@ -146,7 +147,7 @@ function StudioCanvas({
             htmlFor="trigger-payload-json"
             className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500"
           >
-            Payload Trigger (JSON)
+            {t.triggerPayloadLabel}
           </label>
           <textarea
             id="trigger-payload-json"
@@ -174,7 +175,7 @@ function StudioCanvas({
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />
               <span>
-                <strong>Ciclo DAG detectado:</strong> nodos en conflicto (
+                <strong>{t.dagCycleDetected}</strong> {t.conflictingNodes} (
                 {validation.cycleNodes.join(", ")})
               </span>
             </div>
@@ -183,7 +184,7 @@ function StudioCanvas({
               onClick={clearCycleEdges}
               className="rounded-md bg-rose-500 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-rose-400"
             >
-              Eliminar aristas de ciclo
+              {t.removeCycleEdges}
             </button>
           </div>
         )}
@@ -223,6 +224,7 @@ export function StudioWorkspace({
 }) {
   const queryClient = useQueryClient();
   const { pushToast } = useUiToast();
+  const { t } = useLocale();
 
   const workflowsQuery = useQuery({
     queryKey: ["workflows"],
@@ -459,7 +461,7 @@ export function StudioWorkspace({
           </div>
 
           <select
-            aria-label="Seleccionar plantilla de workflow"
+            aria-label={t.selectWorkflowAria}
             value={workflowId}
             onChange={(e) => handleSelectWorkflow(e.target.value)}
             className="rounded-lg border border-zinc-300 bg-zinc-50 px-2.5 py-1.5 text-xs font-medium outline-none focus:border-indigo-500 dark:border-zinc-800 dark:bg-zinc-900"
@@ -480,7 +482,7 @@ export function StudioWorkspace({
             size="sm"
             onClick={undo}
             disabled={historyPast.length === 0}
-            title="Deshacer"
+            title={t.undo}
           >
             <Undo2 className="h-3.5 w-3.5" />
           </UiButton>
@@ -489,7 +491,7 @@ export function StudioWorkspace({
             size="sm"
             onClick={redo}
             disabled={historyFuture.length === 0}
-            title="Rehacer"
+            title={t.redo}
           >
             <Redo2 className="h-3.5 w-3.5" />
           </UiButton>
@@ -497,21 +499,19 @@ export function StudioWorkspace({
             variant="outline"
             size="sm"
             onClick={autoLayout}
-            title="Auto-Layout Topologico"
+            title={t.autoLayoutTitle}
           >
             <LayoutGrid className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Auto-Layout</span>
+            <span className="hidden sm:inline">{t.autoLayout}</span>
           </UiButton>
           <UiButton
             variant="outline"
             size="sm"
             onClick={simulateCycle}
-            title="Simular Ciclo (Test Validador)"
+            title={t.simulateCycle}
           >
             <ShieldAlert className="h-3.5 w-3.5 text-rose-400" />
-            <span className="hidden lg:inline">
-              Simular Ciclo (Test Validador)
-            </span>
+            <span className="hidden lg:inline">{t.simulateCycle}</span>
           </UiButton>
           <UiButton
             variant="secondary"
@@ -520,7 +520,7 @@ export function StudioWorkspace({
             loading={saveMutation.isPending}
           >
             <Save className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Guardar</span>
+            <span className="hidden sm:inline">{t.save}</span>
           </UiButton>
           <UiButton
             data-testid="run-demo-btn"
@@ -530,7 +530,7 @@ export function StudioWorkspace({
             loading={isExecuting}
           >
             <Play className="h-3.5 w-3.5" />
-            Ejecutar Flujo (1-Click Demo)
+            {t.runDemo}
           </UiButton>
 
           <UiButton
@@ -538,17 +538,17 @@ export function StudioWorkspace({
             variant="outline"
             size="sm"
             onClick={() => setMcpOpen(true)}
-            title="Abrir MCP Inspector"
+            title={t.mcpInspectorTitle}
           >
             <Terminal className="h-3.5 w-3.5 text-indigo-400" />
-            <span className="hidden xl:inline">MCP Inspector</span>
+            <span className="hidden xl:inline">{t.mcpInspector}</span>
           </UiButton>
           <Link
             href="/workflows"
             className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-zinc-300 px-2.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
           >
             <FolderKanban className="h-3.5 w-3.5" />
-            <span className="hidden xl:inline">Workflows</span>
+            <span className="hidden xl:inline">{t.workflows}</span>
           </Link>
           <a
             href="/api/docs"
@@ -559,10 +559,11 @@ export function StudioWorkspace({
             <BookOpen className="h-3.5 w-3.5" />
             <span className="hidden xl:inline">API</span>
           </a>
+          <LanguageToggle />
           <button
             type="button"
             onClick={toggleTheme}
-            aria-label="Alternar tema"
+            aria-label={t.toggleThemeAria}
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
           >
             <Moon className="hidden h-3.5 w-3.5 dark:inline" />
@@ -585,7 +586,7 @@ export function StudioWorkspace({
         >
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-semibold text-zinc-400">
-              Logs de Ejecucion:
+              {t.executionLogs}
             </span>
             {logSummaryList.map((log) => (
               <button
